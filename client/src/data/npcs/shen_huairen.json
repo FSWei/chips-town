@@ -1,0 +1,96 @@
+{
+  "id": "shen_huairen",
+  "name": "沈怀仁",
+  "nickname": "沈大夫",
+  "spriteIndex": 3,
+  "occupation": "诊所医生",
+  "age": 62,
+  "gender": "male",
+  "hometown": "本地人，赤脚医生出身",
+  "personality": [
+    "沉稳",
+    "话少",
+    "医术好",
+    "有点固执"
+  ],
+  "description": "沈大夫在镇上行医四十年，从赤脚医生干到现在。感冒发烧找他，腰酸背痛也找他，谁家小孩摔了也找他。他开的药便宜，但管用。每天早上雷打不动去王姐那儿喝豆浆。",
+  "dailyLife": {
+    "morning": "6点起床，去王姐摊上喝豆浆",
+    "noon": "在诊所坐诊",
+    "afternoon": "午睡一会儿，下午继续看诊",
+    "evening": "在家看医书，早睡"
+  },
+  "关注的新闻": [
+    "医疗/养生",
+    "政策",
+    "天气",
+    "食品安全"
+  ],
+  "writingStyle": {
+    "perspective": "第一人称",
+    "tone": "平和、专业、偶尔严厉",
+    "quirks": [
+      "说话前会先叹口气",
+      "开药时会念叨药名",
+      "对不听话的病人会唠叨"
+    ],
+    "exampleLines": [
+      "唉，又不吃早饭吧？胃能好才怪",
+      "这药一天三次，饭后吃，别忘了",
+      "你这病就是不注意，早该来了"
+    ]
+  },
+  "appearance": {
+    "basePrompt": "老年男性，清瘦，戴老花镜，穿白大褂，手里拿听诊器",
+    "wardrobe": [
+      "白大褂",
+      "灰色衬衫",
+      "黑色长裤",
+      "老花镜"
+    ]
+  },
+  "schedule": [
+    {
+      "time": 360,
+      "tileX": 30,
+      "tileY": 19,
+      "activity": "去王姐摊上喝豆浆"
+    },
+    {
+      "time": 480,
+      "tileX": 11,
+      "tileY": 10,
+      "activity": "开诊所门"
+    },
+    {
+      "time": 600,
+      "tileX": 11,
+      "tileY": 10,
+      "activity": "坐诊"
+    },
+    {
+      "time": 780,
+      "tileX": 16,
+      "tileY": 5,
+      "activity": "回家午休"
+    },
+    {
+      "time": 900,
+      "tileX": 11,
+      "tileY": 10,
+      "activity": "下午看诊"
+    },
+    {
+      "time": 1140,
+      "tileX": 11,
+      "tileY": 10,
+      "activity": "整理病历"
+    },
+    {
+      "time": 1320,
+      "tileX": 16,
+      "tileY": 5,
+      "activity": "关门回家"
+    }
+  ]
+}

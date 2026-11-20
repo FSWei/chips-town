@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>Tilemap Editor — 三面板</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;background:#1a1a2e;color:#e0e0e0;font-family:'Segoe UI',system-ui,sans-serif}
+#toolbar{display:flex;align-items:center;gap:8px;padding:4px 10px;background:#0f0f23;border-bottom:1px solid #333;height:36px;flex-shrink:0;flex-wrap:wrap}
+#toolbar button{padding:3px 10px;background:#2a2a4a;border:1px solid #555;color:#ddd;border-radius:4px;cursor:pointer;font-size:12px}
+#toolbar button:hover{background:#3a3a6a}
+#toolbar button.active{background:#4ecca3;color:#000;border-color:#4ecca3}
+#toolbar .sep{width:1px;height:20px;background:#444}
+#toolbar label{font-size:12px;color:#aaa}
+#toolbar input[type=number]{width:50px;background:#1a1a2e;border:1px solid #555;color:#ddd;border-radius:3px;padding:2px 4px;font-size:12px}
+#main{display:flex;height:calc(100% - 36px)}
+.panel{display:flex;flex-direction:column;overflow:hidden;border-right:1px solid #333}
+.panel:last-child{border-right:none}
+.panel-head{display:flex;align-items:center;gap:6px;padding:3px 8px;background:#16213e;border-bottom:1px solid #333;font-size:12px;font-weight:600;flex-shrink:0;cursor:default;user-select:none}
+.panel-head .info{margin-left:auto;font-weight:400;color:#888;font-size:11px}
+.panel-body{flex:1;overflow:auto;position:relative;background:#0f0f23;cursor:crosshair}
+.panel-body canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges}
+#sidebar{width:190px;background:#16213e;border-left:1px solid #333;overflow-y:auto;flex-shrink:0;padding:8px;font-size:12px}
+#sidebar h3{font-size:13px;margin-bottom:6px;color:#4ecca3}
+#sidebar .sec{margin-bottom:12px}
+#sel-info{color:#aaa;line-height:1.6}
+kbd{background:#2a2a4a;padding:1px 5px;border-radius:3px;font-size:11px;border:1px solid #555}
+</style>
+</head>
+<body>
+<div id="toolbar">
+  <button id="btnPen" class="active" onclick="setTool('pen')">🎨 画笔</button>
+  <button id="btnErase" onclick="setTool('erase')">🧹 橡皮</button>
+  <button id="btnSelect" onclick="setTool('select')">⬚ 框选</button>
+  <div class="sep"></div>
+  <label>地图 W:<input type="number" id="iMW" value="60" min="1" max="200"></label>
+  <label>H:<input type="number" id="iMH" value="45" min="1" max="200"></label>
+  <button onclick="resizeMap()">调整</button>
+  <div class="sep"></div>
+  <button onclick="doExport()">💾 导出地图</button>
+  <button onclick="doImport()">📂 导入地图</button>
+  <div class="sep"></div>
+  <button onclick="doExportTileset()">📦 导出Tileset</button>
+  <button onclick="doImportTileset()">📥 导入Tileset</button>
+</div>
+<div id="main">
+  <!-- Panel 1: Original Tilemap -->
+  <div class="panel" id="pOrig" style="width:320px">
+    <div class="panel-head">① 原始 Tilemap <span class="info" id="origInfo">40×26</span></div>
+    <div class="panel-body" id="origBody"><canvas id="origCv"></canvas></div>
+  </div>
+  <!-- Panel 2: Organized TileSet -->
+  <div class="panel" id="pTS" style="width:420px">
+    <div class="panel-head">② 整理 TileSet <span class="info" id="tsInfo">W:<input type="number" id="iTSW" value="40" min="4" max="128" style="width:40px;background:#0f0f23;border:1px solid #444;color:#ddd;border-radius:2px;font-size:11px;padding:1px 3px"> H:<input type="number" id="iTSH" value="26" min="4" max="128" style="width:40px;background:#0f0f23;border:1px solid #444;color:#ddd;border-radius:2px;font-size:11px;padding:1px 3px"> <button onclick="resizeTileset()" style="padding:1px 6px;font-size:11px">应用</button></span></div>
+    <div class="panel-body" id="tsBody"><canvas id="tsCv"></canvas></div>
+  </div>
+  <!-- Panel 3: Map -->
+  <div class="panel" style="flex:1;min-width:200px">
+    <div class="panel-head">③ 地图 <span class="info" id="mapInfo">60×45</span></div>
+    <div class="panel-body" id="mapBody"><canvas id="mapCv"></canvas></div>
+  </div>
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <div class="sec">
+      <h3>笔刷</h3>
+      <div id="sel-info">无选择</div>
+      <div style="margin-top:6px"><canvas id="brushPv" width="128" height="128" style="background:#0a0a1a;border:1px solid #333;border-radius:3px;width:100%;image-rendering:pixelated"></canvas></div>
+    </div>
+    <div class="sec">
+      <h3>快捷键</h3>
+      <div style="line-height:1.8">
+        <kbd>B</kbd> 画笔 <kbd>E</kbd> 橡皮 <kbd>M</kbd> 框选<br>
+        <kbd>Del</kbd> 删除选区<br>
+        <kbd>Ctrl+Z</kbd> 撤销(地图)<br>
+        <kbd>Ctrl+C/V</kbd> 复制粘贴<br>
+        <kbd>滚轮</kbd> 缩放 <kbd>Esc</kbd> 取消
+      </div>
+    </div>
+    <div class="sec">
+      <h3>操作说明</h3>
+      <div style="color:#888;line-height:1.5;font-size:11px">
+        ① <b>原始</b>：CleanCity原素材，点击/框选tile<br>
+        ② <b>整理</b>：把tile排列成4×4标准格式<br>
+        &nbsp;&nbsp;&nbsp;点击=选取笔刷，右键/CTRL=放置原始tile<br>
+        ③ <b>地图</b>：用笔刷画游戏地图
+      </div>
+    </div>
+  </div>
+</div>
+<input type="file" id="fi" accept=".json" style="display:none">
+<script>
+// ============================================================
+//  Constants
+// ============================================================
+const T = 16
+const ORIG_COLS = 40, ORIG_ROWS = 26
+
+// ============================================================
+//  State
+// ============================================================
+let tsW = 40, tsH = 26
+let tsGrid = []
+let mapW = 60, mapH = 45
+let mapGrid = []
+let origZ = 2, tsZ = 3, mapZ = 2
+let tool = 'pen'
+
+// Brush: array of {dc, dr, idx} — idx is CleanCity tilemap index
+let brush = []
+let brushW = 0, brushH = 0
+
+// Map selection
+let mapSel = null
+let clipboard = null
+
+// Drag states
+let origDrag = false, origDragStart = null
+let tsDrag = false, tsDragStart = null, tsDragMode = null // 'select' | 'place'
+let mapDrag = false, mapSelecting = false
+let sbDrag = false, sbX0 = 0, sbTarget = null, sbW0 = 0
+
+// History
+const mapHist = [], tsHist = []
+const MAX_HIST = 200
+
+// ============================================================
+//  Image
+// ============================================================
+const tilesetImg = new Image()
+tilesetImg.onload = () => { renderAll() }
+tilesetImg.src = '/assets/tilesets/cleancity-tilemap.png'
+
+// ============================================================
+//  Grid init
+// ============================================================
+function makeGrid(w, h, fill=-1) {
+  const g = []; for (let r=0;r<h;r++) { g[r]=[]; for (let c=0;c<w;c++) g[r][c]=fill } return g
+}
+tsGrid = makeGrid(tsW, tsH)
+mapGrid = makeGrid(mapW, mapH)
+
+// ============================================================
+//  Helpers
+// ============================================================
+function clamp(v,lo,hi){return Math.max(lo,Math.min(hi,v))}
+function tIdx(c,r){return r*ORIG_COLS+c}
+function tC(idx){return idx%ORIG_COLS}
+function tR(idx){return Math.floor(idx/ORIG_COLS)}
+function renderAll(){renderOrig();renderTileset();renderMap();renderBrushPreview()}
+
+// ============================================================
+//  Brush management
+// ============================================================
+function setBrush(grid, gw, c1, r1, c2, r2) {
+  brush = []
+  for (let r=r1;r<=r2;r++) for (let c=c1;c<=c2;c++) {
+    if (r<grid.length && c<gw) brush.push({dc:c-c1, dr:r-r1, idx:grid[r][c]})
+  }
+  brushW=c2-c1+1; brushH=r2-r1+1
+  renderBrushPreview(); updateSelInfo()
+}
+function setBrushSingle(idx) {
+  brush=[{dc:0,dr:0,idx}]; brushW=1; brushH=1
+  renderBrushPreview(); updateSelInfo()
+}
+function clearBrush() {
+  brush=[]; brushW=0; brushH=0
+  renderBrushPreview(); updateSelInfo()
+}
+function placeBrushOnGrid(grid, gw, gh, x, y) {
+  for (const bt of brush) {
+    const mx=x+bt.dc, my=y+bt.dr
+    if (mx>=0&&mx<gw&&my>=0&&my<gh&&bt.idx>=0) grid[my][mx]=bt.idx
+  }
+}
+function renderBrushPreview() {
+  const cv = document.getElementById('brushPv'), ctx = cv.getContext('2d')
+  ctx.imageSmoothingEnabled=false; ctx.clearRect(0,0,128,128)
+  if (!brushW||!brushH) return
+  const sc = Math.min(120/(brushW*T), 120/(brushH*T))
+  const ox=(128-brushW*T*sc)/2, oy=(128-brushH*T*sc)/2
+  for (const bt of brush) {
+    if (bt.idx<0) continue
+    ctx.drawImage(tilesetImg, tC(bt.idx)*T, tR(bt.idx)*T, T, T,
+      ox+bt.dc*T*sc, oy+bt.dr*T*sc, T*sc, T*sc)
+  }
+  ctx.strokeStyle='#4ecca3';ctx.lineWidth=1;ctx.strokeRect(ox,oy,brushW*T*sc,brushH*T*sc)
+}
+function updateSelInfo() {
+  const el = document.getElementById('sel-info')
+  if (!brush.length) { el.textContent='无选择'; return }
+  const filled = brush.filter(t=>t.idx>=0).length
+  el.innerHTML = '笔刷: <b>'+brushW+'×'+brushH+'</b><br>有效tile: '+filled
+}
+
+// ============================================================
+//  Tool
+// ============================================================
+function setTool(t) {
+  tool=t
+  document.getElementById('btnPen').classList.toggle('active',t==='pen')
+  document.getElementById('btnErase').classList.toggle('active',t==='erase')
+  document.getElementById('btnSelect').classList.toggle('active',t==='select')
+  if(t!=='select') mapSel=null
+  renderMap()
+}
+
+// ============================================================
+//  Render: Original
+// ============================================================
+function renderOrig() {
+  const cv=document.getElementById('origCv'), ctx=cv.getContext('2d')
+  cv.width=ORIG_COLS*T*origZ; cv.height=ORIG_ROWS*T*origZ
+  ctx.imageSmoothingEnabled=false
+  ctx.drawImage(tilesetImg, 0, 0, cv.width, cv.height)
+  ctx.strokeStyle='#ffffff18'; ctx.lineWidth=1
+  for(let c=0;c<=ORIG_COLS;c++){ctx.beginPath();ctx.moveTo(c*T*origZ,0);ctx.lineTo(c*T*origZ,cv.height);ctx.stroke()}
+  for(let r=0;r<=ORIG_ROWS;r++){ctx.beginPath();ctx.moveTo(0,r*T*origZ);ctx.lineTo(cv.width,r*T*origZ);ctx.stroke()}
+  // Highlight brush tiles on original
+  if (brush.length) {
+    ctx.fillStyle='#4ecca333'; ctx.strokeStyle='#4ecca388'; ctx.lineWidth=1
+    for (const bt of brush) {
+      if (bt.idx<0) continue
+      const c=tC(bt.idx), r=tR(bt.idx)
+      ctx.fillRect(c*T*origZ,r*T*origZ,T*origZ,T*origZ)
+      ctx.strokeRect(c*T*origZ+1,r*T*origZ+1,T*origZ-2,T*origZ-2)
+    }
+  }
+  document.getElementById('origInfo').textContent=ORIG_COLS+'×'+ORIG_ROWS+' | 缩放:'+origZ+'x'
+}
+
+// ============================================================
+//  Render: Tileset
+// ============================================================
+function renderTileset() {
+  const cv=document.getElementById('tsCv'), ctx=cv.getContext('2d')
+  cv.width=tsW*T*tsZ; cv.height=tsH*T*tsZ
+  ctx.imageSmoothingEnabled=false
+  ctx.fillStyle='#0f0f23'; ctx.fillRect(0,0,cv.width,cv.height)
+  for(let r=0;r<tsH;r++) for(let c=0;c<tsW;c++){
+    const idx=tsGrid[r][c]; if(idx<0) continue
+    ctx.drawImage(tilesetImg, tC(idx)*T, tR(idx)*T, T, T, c*T*tsZ, r*T*tsZ, T*tsZ, T*tsZ)
+  }
+  ctx.strokeStyle='#ffffff0a'; ctx.lineWidth=1
+  for(let c=0;c<=tsW;c++){ctx.beginPath();ctx.moveTo(c*T*tsZ,0);ctx.lineTo(c*T*tsZ,cv.height);ctx.stroke()}
+  for(let r=0;r<=tsH;r++){ctx.beginPath();ctx.moveTo(0,r*T*tsZ);ctx.lineTo(cv.width,r*T*tsZ);ctx.stroke()}
+  let filled=0; for(let r=0;r<tsH;r++) for(let c=0;c<tsW;c++) if(tsGrid[r][c]>=0) filled++
+  document.getElementById('tsInfo').innerHTML=tsW+'×'+tsH+' | 已放:'+filled+' | 缩放:'+tsZ+'x'
+}
+
+// ============================================================
+//  Render: Map
+// ============================================================
+function renderMap() {
+  const cv=document.getElementById('mapCv'), ctx=cv.getContext('2d')
+  cv.width=mapW*T*mapZ; cv.height=mapH*T*mapZ
+  ctx.imageSmoothingEnabled=false
+  ctx.fillStyle='#0f0f23'; ctx.fillRect(0,0,cv.width,cv.height)
+  for(let r=0;r<mapH;r++) for(let c=0;c<mapW;c++){
+    const idx=mapGrid[r][c]
+    if(idx>=0){ctx.drawImage(tilesetImg,tC(idx)*T,tR(idx)*T,T,T,c*T*mapZ,r*T*mapZ,T*mapZ,T*mapZ)}
+    else{ctx.fillStyle=((c+r)%2===0)?'#1a1a2e':'#16213e';ctx.fillRect(c*T*mapZ,r*T*mapZ,T*mapZ,T*mapZ)}
+  }
+  ctx.strokeStyle='#ffffff08'; ctx.lineWidth=1
+  for(let c=0;c<=mapW;c++){ctx.beginPath();ctx.moveTo(c*T*mapZ,0);ctx.lineTo(c*T*mapZ,cv.height);ctx.stroke()}
+  for(let r=0;r<=mapH;r++){ctx.beginPath();ctx.moveTo(0,r*T*mapZ);ctx.lineTo(cv.width,r*T*mapZ);ctx.stroke()}
+  if(mapSel){
+    const x1=Math.min(mapSel.x1,mapSel.x2),y1=Math.min(mapSel.y1,mapSel.y2)
+    const x2=Math.max(mapSel.x1,mapSel.x2),y2=Math.max(mapSel.y1,mapSel.y2)
+    ctx.fillStyle='#e9456033';ctx.fillRect(x1*T*mapZ,y1*T*mapZ,(x2-x1+1)*T*mapZ,(y2-y1+1)*T*mapZ)
+    ctx.strokeStyle='#e94560';ctx.lineWidth=2;ctx.setLineDash([6,3])
+    ctx.strokeRect(x1*T*mapZ,y1*T*mapZ,(x2-x1+1)*T*mapZ,(y2-y1+1)*T*mapZ);ctx.setLineDash([])
+  }
+  let filled=0;const used=new Set()
+  for(let r=0;r<mapH;r++)for(let c=0;c<mapW;c++){const i=mapGrid[r][c];if(i>=0){filled++;used.add(i)}}
+  document.getElementById('mapInfo').textContent=mapW+'×'+mapH+' | 已放:'+filled+' | 种类:'+used.size+' | 缩放:'+mapZ+'x'
+}
+
+// ============================================================
+//  Tile hit detection
+// ============================================================
+function origTileAt(e) {
+  const cv=document.getElementById('origCv'),rect=cv.getBoundingClientRect()
+  const c=Math.floor((e.clientX-rect.left)/(T*origZ)), r=Math.floor((e.clientY-rect.top)/(T*origZ))
+  return (c>=0&&c<ORIG_COLS&&r>=0&&r<ORIG_ROWS)?{c,r}:null
+}
+function tsTileAt(e) {
+  const cv=document.getElementById('tsCv'),rect=cv.getBoundingClientRect()
+  const c=Math.floor((e.clientX-rect.left)/(T*tsZ)), r=Math.floor((e.clientY-rect.top)/(T*tsZ))
+  return (c>=0&&c<tsW&&r>=0&&r<tsH)?{c,r}:null
+}
+function mapTileAt(e) {
+  const cv=document.getElementById('mapCv'),rect=cv.getBoundingClientRect()
+  const c=Math.floor((e.clientX-rect.left)/(T*mapZ)), r=Math.floor((e.clientY-rect.top)/(T*mapZ))
+  return (c>=0&&c<mapW&&r>=0&&r<mapH)?{c,r}:null
+}
+
+// ============================================================
+//  Panel 1: Original — click/drag to select brush
+// ============================================================
+document.getElementById('origCv').addEventListener('mousedown', e => {
+  const t=origTileAt(e); if(!t) return
+  origDrag=true; origDragStart={c:t.c,r:t.r}
+})
+document.getElementById('origCv').addEventListener('mousemove', e => {
+  const t=origTileAt(e)
+  if(t) document.getElementById('origInfo').textContent='('+t.c+','+t.r+') idx='+tIdx(t.c,t.r)+' | 缩放:'+origZ+'x'
+  if(!origDrag||!origDragStart||!t) return
+  // Draw preview
+  renderOrig()
+  const ctx=document.getElementById('origCv').getContext('2d')
+  const c1=Math.min(origDragStart.c,t.c),r1=Math.min(origDragStart.r,t.r)
+  const c2=Math.max(origDragStart.c,t.c),r2=Math.max(origDragStart.r,t.r)
+  ctx.fillStyle='#4ecca333';ctx.strokeStyle='#4ecca3';ctx.lineWidth=1.5
+  for(let r=r1;r<=r2;r++) for(let c=c1;c<=c2;c++){
+    ctx.fillRect(c*T*origZ,r*T*origZ,T*origZ,T*origZ)
+    ctx.strokeRect(c*T*origZ+1,r*T*origZ+1,T*origZ-2,T*origZ-2)
+  }
+})
+document.getElementById('origCv').addEventListener('mouseup', e => {
+  if(!origDrag||!origDragStart) return
+  const t=origTileAt(e); origDrag=false
+  if(!t){origDragStart=null;return}
+  const c1=Math.min(origDragStart.c,t.c),r1=Math.min(origDragStart.r,t.r)
+  const c2=Math.max(origDragStart.c,t.c),r2=Math.max(origDragStart.r,t.r)
+  // Build brush directly from original indices
+  brush=[]
+  for(let r=r1;r<=r2;r++) for(let c=c1;c<=c2;c++)
+    brush.push({dc:c-c1,dr:r-r1,idx:tIdx(c,r)})
+  brushW=c2-c1+1; brushH=r2-r1+1
+  origDragStart=null; renderOrig(); renderBrushPreview(); updateSelInfo()
+  setTool('pen')
+})
+document.getElementById('origBody').addEventListener('wheel', e => {
+  e.preventDefault(); origZ=clamp(origZ+(e.deltaY<0?1:-1),1,8); renderOrig()
+},{passive:false})
+
+// ============================================================
+//  Panel 2: Tileset
+//  - Plain click/drag: select from tileset as brush
+//  - Right-click or Ctrl+click/drag: place current brush onto tileset
+// ============================================================
+document.getElementById('tsCv').addEventListener('mousedown', e => {
+  const t=tsTileAt(e); if(!t) return
+  if (e.button===2 || e.ctrlKey) {
+    // Place mode: put current brush onto tileset
+    e.preventDefault()
+    if (brush.length && tool==='pen') {
+      saveTsHist()
+      placeBrushOnGrid(tsGrid, tsW, tsH, t.c, t.r)
+      renderTileset()
+    }
+    tsDrag=true; tsDragMode='place'; tsDragStart={c:t.c,r:t.r}
+  } else {
+    // Select mode: will build brush from tileset on mouseup
+    tsDrag=true; tsDragMode='select'; tsDragStart={c:t.c,r:t.r}
+  }
+})
+document.getElementById('tsCv').addEventListener('mousemove', e => {
+  const t=tsTileAt(e); if(!t) return
+  // Hover info
+  const idx=tsGrid[t.r]?.[t.c]
+  document.getElementById('tsInfo').innerHTML='('+t.c+','+t.r+') '+(idx>=0?'idx='+idx:'空')+' | 缩放:'+tsZ+'x'
+  // Drag place
+  if(tsDrag && tsDragMode==='place' && brush.length && tool==='pen') {
+    placeBrushOnGrid(tsGrid, tsW, tsH, t.c, t.r)
+    renderTileset()
+  }
+})
+document.getElementById('tsCv').addEventListener('mouseup', e => {
+  if(!tsDrag) { tsDragMode=null; return }
+  const t=tsTileAt(e)
+  if(tsDragMode==='select' && tsDragStart && t) {
+    const c1=Math.min(tsDragStart.c,t.c),r1=Math.min(tsDragStart.r,t.r)
+    const c2=Math.max(tsDragStart.c,t.c),r2=Math.max(tsDragStart.r,t.r)
+    setBrush(tsGrid, tsW, c1, r1, c2, r2)
+    setTool('pen')
+  }
+  tsDrag=false; tsDragMode=null; tsDragStart=null
+})
+// Right-click context menu prevention
+document.getElementById('tsCv').addEventListener('contextmenu', e => e.preventDefault())
+document.getElementById('tsBody').addEventListener('wheel', e => {
+  e.preventDefault(); tsZ=clamp(tsZ+(e.deltaY<0?1:-1),1,8); renderTileset()
+},{passive:false})
+
+// ============================================================
+//  Panel 3: Map — paint with brush
+// ============================================================
+document.getElementById('mapCv').addEventListener('mousedown', e => {
+  const t=mapTileAt(e); if(!t) return
+  if(tool==='select'){mapSelecting=true;mapSel={x1:t.c,y1:t.r,x2:t.c,y2:t.r};renderMap();return}
+  mapDrag=true; saveMapHist()
+  if(tool==='erase'||e.ctrlKey){mapGrid[t.r][t.c]=-1}
+  else if(tool==='pen'&&brush.length){placeBrushOnGrid(mapGrid,mapW,mapH,t.c,t.r)}
+  renderMap()
+})
+document.getElementById('mapCv').addEventListener('mousemove', e => {
+  const t=mapTileAt(e); if(!t) return
+  if(mapSelecting&&mapSel){mapSel.x2=t.c;mapSel.y2=t.r;renderMap();return}
+  if(mapDrag){
+    if(tool==='erase'||e.ctrlKey){saveMapHist();mapGrid[t.r][t.c]=-1;renderMap()}
+    else if(tool==='pen'&&brush.length){saveMapHist();placeBrushOnGrid(mapGrid,mapW,mapH,t.c,t.r);renderMap()}
+  }
+  // Hover preview
+  renderMap()
+  const ctx=document.getElementById('mapCv').getContext('2d')
+  if(tool==='pen'&&brush.length){
+    ctx.globalAlpha=0.5
+    for(const bt of brush){
+      if(bt.idx<0) continue
+      const dx=(t.c+bt.dc)*T*mapZ, dy=(t.r+bt.dr)*T*mapZ
+      if(dx>=0&&dy>=0&&dx<document.getElementById('mapCv').width&&dy<document.getElementById('mapCv').height)
+        ctx.drawImage(tilesetImg,tC(bt.idx)*T,tR(bt.idx)*T,T,T,dx,dy,T*mapZ,T*mapZ)
+    }
+    ctx.globalAlpha=1
+  } else {
+    ctx.strokeStyle=tool==='erase'?'#e94560':tool==='select'?'#f1c40f':'#4ecca3'
+    ctx.lineWidth=2
+    ctx.strokeRect(t.c*T*mapZ+1,t.r*T*mapZ+1,T*mapZ-2,T*mapZ-2)
+  }
+})
+document.addEventListener('mouseup',()=>{
+  mapDrag=false;mapSelecting=false;sbDrag=false;origDrag=false;tsDrag=false;tsDragMode=null
+})
+document.getElementById('mapBody').addEventListener('wheel',e=>{
+  e.preventDefault();mapZ=clamp(mapZ+(e.deltaY<0?1:-1),1,8);renderMap()
+},{passive:false})
+
+// ============================================================
+//  Panel resize
+// ============================================================
+document.querySelectorAll('.panel').forEach(p=>{
+  p.addEventListener('mousedown',e=>{
+    if(e.offsetX>p.offsetWidth-6&&p.style.width){
+      sbDrag=true;sbX0=e.clientX;sbTarget=p;sbW0=p.offsetWidth;e.preventDefault()
+    }
+  })
+})
+document.addEventListener('mousemove',e=>{
+  if(sbDrag&&sbTarget) sbTarget.style.width=Math.max(150,Math.min(800,sbW0+(e.clientX-sbX0)))+'px'
+})
+
+// ============================================================
+//  History
+// ============================================================
+function saveMapHist(){mapHist.push(JSON.stringify(mapGrid));if(mapHist.length>MAX_HIST)mapHist.shift()}
+function saveTsHist(){tsHist.push(JSON.stringify(tsGrid));if(tsHist.length>MAX_HIST)tsHist.shift()}
+function undoMap(){if(!mapHist.length)return;mapGrid=JSON.parse(mapHist.pop());renderMap()}
+function undoTs(){if(!tsHist.length)return;tsGrid=JSON.parse(tsHist.pop());renderTileset()}
+
+// ============================================================
+//  Keyboard
+// ============================================================
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return
+  if(e.ctrlKey&&e.key==='z'){e.preventDefault();undoMap();return}
+  if(e.ctrlKey&&e.key==='c'){e.preventDefault();doCopy();return}
+  if(e.ctrlKey&&e.key==='v'){e.preventDefault();doPaste();return}
+  if(e.key==='b'||e.key==='B') setTool('pen')
+  if(e.key==='e'||e.key==='E') setTool('erase')
+  if(e.key==='m'||e.key==='M') setTool('select')
+  if((e.key==='Delete'||e.key==='Backspace')&&tool==='select'&&mapSel){
+    const x1=Math.min(mapSel.x1,mapSel.x2),y1=Math.min(mapSel.y1,mapSel.y2)
+    const x2=Math.max(mapSel.x1,mapSel.x2),y2=Math.max(mapSel.y1,mapSel.y2)
+    saveMapHist()
+    for(let r=y1;r<=y2;r++)for(let c=x1;c<=x2;c++)if(r<mapH&&c<mapW)mapGrid[r][c]=-1
+    mapSel=null;renderMap()
+  }
+  if(e.key==='Escape'){mapSel=null;clearBrush();renderMap()}
+})
+
+// ============================================================
+//  Copy / Paste
+// ============================================================
+function doCopy(){
+  if(!mapSel) return
+  const x1=Math.min(mapSel.x1,mapSel.x2),y1=Math.min(mapSel.y1,mapSel.y2)
+  const x2=Math.max(mapSel.x1,mapSel.x2),y2=Math.max(mapSel.y1,mapSel.y2)
+  const w=x2-x1+1,h=y2-y1+1
+  clipboard={w,h,data:[]}
+  for(let r=0;r<h;r++){clipboard.data[r]=[];for(let c=0;c<w;c++)
+    clipboard.data[r][c]=(y1+r<mapH&&x1+c<mapW)?mapGrid[y1+r][x1+c]:-1}
+}
+function doPaste(){
+  if(!clipboard) return
+  saveMapHist()
+  for(let r=0;r<clipboard.h;r++)for(let c=0;c<clipboard.w;c++)
+    if(r<mapH&&c<mapW) mapGrid[r][c]=clipboard.data[r][c]
+  renderMap()
+}
+
+// ============================================================
+//  Export / Import
+// ============================================================
+function doExport(){
+  downloadJSON({mapWidth:mapW,mapHeight:mapH,tileSize:T,tilemapCols:ORIG_COLS,grid:mapGrid},'game-map.json')
+}
+function doImport(){
+  const fi=document.getElementById('fi')
+  fi.onchange=e=>{const f=e.target.files[0];if(!f)return
+    const rd=new FileReader();rd.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(d.grid){
+      mapW=d.mapWidth;mapH=d.mapHeight;mapGrid=d.grid
+      document.getElementById('iMW').value=mapW;document.getElementById('iMH').value=mapH
+      renderMap();alert('导入地图 '+mapW+'×'+mapH)
+    }}catch(e){alert('JSON错误')}};rd.readAsText(f);fi.value=''
+  };fi.click()
+}
+function doExportTileset(){
+  downloadJSON({width:tsW,height:tsH,tileSize:T,tilemapCols:ORIG_COLS,grid:tsGrid},'tileset-layout.json')
+}
+function doImportTileset(){
+  const fi=document.getElementById('fi')
+  fi.onchange=e=>{const f=e.target.files[0];if(!f)return
+    const rd=new FileReader();rd.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(d.grid){
+      tsW=d.width;tsH=d.height;tsGrid=d.grid;renderTileset();alert('导入Tileset '+tsW+'×'+tsH)
+    }}catch(e){alert('JSON错误')}};rd.readAsText(f);fi.value=''
+  };fi.click()
+}
+function downloadJSON(data,filename){
+  const a=document.createElement('a')
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}))
+  a.download=filename;a.click()
+}
+
+// ============================================================
+//  Resize
+// ============================================================
+function resizeMap(){
+  const nw=parseInt(document.getElementById('iMW').value)||60
+  const nh=parseInt(document.getElementById('iMH').value)||45
+  saveMapHist()
+  const ng=[]
+  for(let r=0;r<nh;r++){ng[r]=[];for(let c=0;c<nw;c++)ng[r][c]=(r<mapH&&c<mapW)?mapGrid[r][c]:-1}
+  mapW=nw;mapH=nh;mapGrid=ng;renderMap()
+}
+function resizeTileset(){
+  const nw=parseInt(document.getElementById('iTSW').value)||40
+  const nh=parseInt(document.getElementById('iTSH').value)||26
+  saveTsHist()
+  const ng=[]
+  for(let r=0;r<nh;r++){ng[r]=[];for(let c=0;c<nw;c++)ng[r][c]=(r<tsH&&c<tsW)?tsGrid[r][c]:-1}
+  tsW=nw;tsH=nh;tsGrid=ng;renderTileset()
+}
+
+// Blur safety
+window.addEventListener('blur',()=>{mapDrag=false;mapSelecting=false;sbDrag=false;origDrag=false;tsDrag=false;tsDragMode=null})
+</script>
+</body>
+</html>

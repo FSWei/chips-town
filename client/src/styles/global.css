@@ -1,0 +1,283 @@
+/* ============================================
+   Chips Town — 深墨 + 琥珀金 设计系统
+   与 Distill Yourself 统一配色
+   ============================================ */
+
+:root {
+  /* === 墨色系 (ink scale) === */
+  --ink-950: #0c0a09;
+  --ink-900: #1c1917;
+  --ink-800: #292524;
+  --ink-700: #44403c;
+  --ink-600: #57534e;
+  --ink-500: #78716c;
+  --ink-400: #a8a29e;
+  --ink-300: #d6d3d1;
+  --ink-200: #e7e5e4;
+  --ink-100: #f5f5f4;
+
+  /* === 琥珀金 (accent) === */
+  --gold-500: #f59e0b;
+  --gold-400: #fbbf24;
+  --gold-300: #fcd34d;
+  --gold-200: #fde68a;
+  --gold-glow: rgba(245, 158, 11, 0.15);
+  --gold-glow-strong: rgba(245, 158, 11, 0.3);
+
+  /* === 玻璃面板 === */
+  --glass-bg: rgba(28, 25, 23, 0.85);
+  --glass-border: rgba(168, 162, 158, 0.1);
+  --glass-hover: rgba(168, 162, 158, 0.15);
+
+  /* === 语义色 === */
+  --success: #66BB6A;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --info: #4FC3F7;
+
+  /* === 背景 === */
+  --bg-page: var(--ink-950);
+  --bg-card: var(--glass-bg);
+  --bg-input: var(--ink-900);
+  --bg-elevated: var(--ink-800);
+  --bg-warm: var(--ink-800);
+
+  /* === 文字 === */
+  --text-primary: var(--ink-100);
+  --text-secondary: var(--ink-400);
+  --text-muted: var(--ink-500);
+  --text-ghost: var(--ink-600);
+
+  /* === 强调色（兼容旧token）=== */
+  --accent: var(--gold-500);
+  --accent-hover: var(--gold-400);
+  --accent-glow: var(--gold-glow);
+  --accent-subtle: rgba(245, 158, 11, 0.08);
+  --accent-dim: rgba(245, 158, 11, 0.12);
+
+  /* === 边框 === */
+  --border-dim: var(--glass-border);
+  --border-subtle: rgba(168, 162, 158, 0.15);
+  --border-accent: rgba(245, 158, 11, 0.2);
+  --color-border: var(--border-subtle);
+  --color-border-subtle: var(--border-dim);
+
+  /* === 兼容旧token === */
+  --color-bg: var(--bg-page);
+  --color-surface-0: var(--ink-900);
+  --color-surface-1: var(--ink-800);
+  --color-surface-2: var(--ink-700);
+  --color-surface-3: var(--ink-600);
+  --color-accent: var(--gold-500);
+  --color-accent-dim: var(--gold-glow);
+  --color-accent-hover: var(--gold-400);
+  --color-text: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-panel-bg: var(--glass-bg);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --font-main: var(--font-sans);
+
+  /* === 字体 === */
+  --font-display: 'Noto Serif SC', 'Georgia', serif;
+  --font-sans: 'Noto Sans SC', -apple-system, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* === 字号 === */
+  --text-display: clamp(1.75rem, 4vw, 2.5rem);
+  --text-title: clamp(1.25rem, 2.5vw, 1.75rem);
+  --text-heading: 1.125rem;
+  --text-body: 0.875rem;
+  --text-small: 0.8125rem;
+  --text-caption: 0.75rem;
+  --text-label: 0.6875rem;
+
+  /* === 间距 === */
+  --space-1: 4px; --space-2: 8px; --space-3: 12px;
+  --space-4: 16px; --space-5: 20px; --space-6: 24px;
+  --space-8: 32px; --space-10: 40px; --space-12: 48px;
+
+  /* === 圆角 === */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+
+  /* === 阴影 === */
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.2);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.3);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,0.4);
+  --shadow-card: 0 8px 32px rgba(0,0,0,0.3);
+
+  /* === 动画 === */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
+  --transition-fast: var(--duration-fast) var(--ease-out);
+  --transition-normal: var(--duration-normal) var(--ease-out);
+
+  /* === Z-index === */
+  --z-base: 1; --z-card: 10; --z-overlay: 100;
+  --z-modal: 1000; --z-toast: 9999;
+}
+
+/* === 全局重置 === */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body, #app {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  width: 100%; height: 100%; overflow: hidden;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-page);
+  color: var(--text-primary);
+  line-height: 1.6;
+  selection-background: var(--gold-glow);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* === PixiJS Canvas — 确保全屏显示 === */
+.pixi-mount {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden !important;
+}
+.pixi-mount canvas,
+canvas[style*="touch-action"] {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  image-rendering: pixelated !important;
+  image-rendering: crisp-edges !important;
+}
+
+/* 选中文字样式 */
+::selection {
+  background: var(--gold-glow);
+  color: var(--gold-300);
+}
+
+a { color: var(--accent); text-decoration: none; transition: color var(--transition-fast); }
+a:hover { color: var(--accent-hover); }
+button { font-family: inherit; cursor: pointer; }
+button:focus-visible {
+  outline: 2px solid var(--gold-500);
+  outline-offset: 2px;
+}
+input:focus-visible {
+  outline: 2px solid var(--gold-500);
+  outline-offset: 1px;
+}
+.tabular-nums { font-variant-numeric: tabular-nums; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--ink-700); border-radius: var(--radius-full); }
+::-webkit-scrollbar-thumb:hover { background: var(--ink-600); }
+
+/* === 像素风边框 === */
+.pixel-border {
+  border: 2px solid var(--ink-700);
+  box-shadow:
+    inset -2px -2px 0 var(--ink-900),
+    inset 2px 2px 0 var(--ink-600),
+    0 0 0 2px var(--ink-950);
+}
+.pixel-border-gold {
+  border: 2px solid var(--gold-500);
+  box-shadow:
+    inset -2px -2px 0 rgba(245,158,11,0.3),
+    inset 2px 2px 0 rgba(251,191,36,0.5),
+    0 0 0 2px var(--ink-950),
+    0 0 12px var(--gold-glow);
+}
+
+/* === 全局微交互 === */
+.hover-lift {
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+
+.hover-glow {
+  transition: box-shadow 0.3s ease;
+}
+.hover-glow:hover {
+  box-shadow: 0 0 16px var(--gold-glow), 0 0 32px rgba(245,158,11,0.05);
+}
+
+/* === 脉冲动画 === */
+@keyframes pulse-gold {
+  0%, 100% { box-shadow: 0 0 0 0 var(--gold-glow); }
+  50% { box-shadow: 0 0 0 6px transparent; }
+}
+.pulse-gold { animation: pulse-gold 2s ease-in-out infinite; }
+
+/* === 闪烁光标 === */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.blink { animation: blink 1s step-end infinite; }
+
+/* === 打字机效果 === */
+.typewriter {
+  overflow: hidden;
+  border-right: 2px solid var(--gold-500);
+  white-space: nowrap;
+  animation: typing 2s steps(20), blink 1s step-end infinite;
+}
+@keyframes typing {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+/* === 弹性缩放 === */
+@keyframes bounceIn {
+  0% { transform: scale(0.3); opacity: 0; }
+  50% { transform: scale(1.05); }
+  70% { transform: scale(0.9); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.bounce-in { animation: bounceIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+/* === 滑入变体 === */
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes slideInUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@keyframes slideInDown {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}

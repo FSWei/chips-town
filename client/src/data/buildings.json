@@ -1,0 +1,17 @@
+[
+  { "id": "breakfast-shop", "name": "王姐早餐店", "x": 30, "y": 19, "width": 3, "height": 2, "color": "#e8c170", "roofColor": "#b8913a", "npcId": "wang_xiufen", "entrance": { "x": 30, "y": 19 } },
+  { "id": "convenience-store", "name": "老赵便利店", "x": 35, "y": 10, "width": 3, "height": 2, "color": "#8a8a8a", "roofColor": "#555555", "npcId": "zhao_jianguo", "entrance": { "x": 35, "y": 10 } },
+  { "id": "delivery-station", "name": "小刘快递站", "x": 41, "y": 43, "width": 3, "height": 2, "color": "#5a8ab5", "roofColor": "#3a6080", "npcId": "liu_yang", "entrance": { "x": 41, "y": 43 } },
+  { "id": "clinic", "name": "陈大夫小医馆", "x": 11, "y": 10, "width": 3, "height": 2, "color": "#e0e0e0", "roofColor": "#a0a0a0", "npcId": "chen_zhiming", "entrance": { "x": 11, "y": 10 } },
+  { "id": "park", "name": "心形公园", "x": 12, "y": 38, "width": 4, "height": 4, "color": "#5a9a3a", "roofColor": null, "npcId": "xiao_bai", "entrance": { "x": 12, "y": 38 } },
+  { "id": "kindergarten", "name": "林老师幼儿园", "x": 12, "y": 19, "width": 3, "height": 2, "color": "#f0c0d0", "roofColor": "#c090a0", "npcId": "lin_xiaoqing", "entrance": { "x": 12, "y": 19 } },
+  { "id": "coffee-shop", "name": "咖啡馆", "x": 16, "y": 10, "width": 3, "height": 2, "color": "#b8845c", "roofColor": "#7a5230", "npcId": null, "entrance": { "x": 16, "y": 10 } },
+  { "id": "bakery", "name": "面包店", "x": 21, "y": 10, "width": 3, "height": 2, "color": "#c4a265", "roofColor": "#8a6a30", "npcId": null, "entrance": { "x": 21, "y": 10 } },
+  { "id": "bookstore", "name": "图书店", "x": 35, "y": 19, "width": 3, "height": 2, "color": "#7a8fa0", "roofColor": "#4a6070", "npcId": null, "entrance": { "x": 35, "y": 19 } },
+  { "id": "clothing-store", "name": "服装店", "x": 40, "y": 19, "width": 3, "height": 2, "color": "#a07ac0", "roofColor": "#7050a0", "npcId": null, "entrance": { "x": 40, "y": 19 } },
+  { "id": "fire-station", "name": "消防局", "x": 48, "y": 19, "width": 3, "height": 2, "color": "#d04040", "roofColor": "#a02020", "npcId": null, "entrance": { "x": 48, "y": 19 } },
+  { "id": "police-station", "name": "警察局", "x": 54, "y": 19, "width": 3, "height": 2, "color": "#4060c0", "roofColor": "#2040a0", "npcId": null, "entrance": { "x": 54, "y": 19 } },
+  { "id": "tech-company", "name": "科技公司", "x": 34, "y": 41, "width": 12, "height": 4, "color": "#6080a0", "roofColor": "#405060", "npcId": "chen_mo", "entrance": { "x": 34, "y": 41 } },
+  { "id": "supermarket", "name": "商店超市", "x": 35, "y": 10, "width": 3, "height": 2, "color": "#a0b060", "roofColor": "#708040", "npcId": null, "entrance": { "x": 35, "y": 10 } },
+  { "id": "residential-row", "name": "路边住宅", "x": 0, "y": 23, "width": 25, "height": 2, "color": "#a0886a", "roofColor": "#6a5840", "npcId": null, "entrance": null }
+]

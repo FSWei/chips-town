@@ -1,0 +1,142 @@
+[
+  {
+    "npc_a_id": "wang_xiufen",
+    "npc_b_id": "zhao_jianguo",
+    "type": "邻居",
+    "description": "早餐摊和小卖部挨着",
+    "strength": 0.8
+  },
+  {
+    "npc_a_id": "wang_xiufen",
+    "npc_b_id": "chen_zhiming",
+    "type": "老主顾",
+    "description": "陈大夫每天早上来喝豆浆",
+    "strength": 0.6
+  },
+  {
+    "npc_a_id": "zhao_jianguo",
+    "npc_b_id": "zhou_defu",
+    "type": "棋友",
+    "description": "下午经常一起下象棋",
+    "strength": 0.8
+  },
+  {
+    "npc_a_id": "zhang_guihua",
+    "npc_b_id": "wang_xiufen",
+    "type": "老姐妹",
+    "description": "买菜时经常聊天",
+    "strength": 0.6
+  },
+  {
+    "npc_a_id": "liu_yang",
+    "npc_b_id": "wang_xiufen",
+    "type": "帮忙",
+    "description": "经常帮王姐搬面粉",
+    "strength": 0.4
+  },
+  {
+    "npc_a_id": "liu_yang",
+    "npc_b_id": "zhao_jianguo",
+    "type": "顾客",
+    "description": "经常去买水买烟",
+    "strength": 0.4
+  },
+  {
+    "npc_a_id": "zhang_guihua",
+    "npc_b_id": "chen_zhiming",
+    "type": "老邻居",
+    "description": "认识几十年",
+    "strength": 0.6
+  },
+  {
+    "npc_a_id": "zhou_defu",
+    "npc_b_id": "chen_zhiming",
+    "type": "老伙计",
+    "description": "偶尔一起喝茶",
+    "strength": 0.6
+  },
+  {
+    "npc_a_id": "zhang_guihua",
+    "npc_b_id": "zhou_defu",
+    "type": "送菜",
+    "description": "老周经常送蔬菜",
+    "strength": 0.4
+  },
+  {
+    "npc_a_id": "chen_mo",
+    "npc_b_id": "wang_xiufen",
+    "type": "顾客",
+    "description": "常去吃早饭",
+    "strength": 0.4
+  },
+  {
+    "npc_a_id": "chen_mo",
+    "npc_b_id": "xiao_bai",
+    "type": "朋友",
+    "description": "周末一起在公园发呆",
+    "strength": 0.6
+  },
+  {
+    "npc_a_id": "chen_mo",
+    "npc_b_id": "zhao_jianguo",
+    "type": "顾客",
+    "description": "总买可乐",
+    "strength": 0.2
+  },
+  {
+    "npc_a_id": "lin_xiaoqing",
+    "npc_b_id": "chen_zhiming",
+    "type": "邻居",
+    "description": "小时候的邻居",
+    "strength": 0.6
+  },
+  {
+    "npc_a_id": "lin_xiaoqing",
+    "npc_b_id": "zhang_guihua",
+    "type": "朋友",
+    "description": "李阿姨帮忙接孩子",
+    "strength": 0.6
+  },
+  {
+    "npc_a_id": "lin_xiaoqing",
+    "npc_b_id": "xiao_bai",
+    "type": "喂猫",
+    "description": "带小朋友喂猫",
+    "strength": 0.8
+  },
+  {
+    "npc_a_id": "lin_xiaoqing",
+    "npc_b_id": "wang_xiufen",
+    "type": "顾客",
+    "description": "买早餐给小朋友",
+    "strength": 0.4
+  },
+  {
+    "npc_a_id": "xiao_bai",
+    "npc_b_id": "zhou_defu",
+    "type": "信任",
+    "description": "最信任的人类",
+    "strength": 1.0
+  },
+  {
+    "npc_a_id": "xiao_bai",
+    "npc_b_id": "wang_xiufen",
+    "type": "投喂",
+    "description": "鱼骨头人类",
+    "strength": 0.6
+  },
+  {
+    "npc_a_id": "xiao_bai",
+    "npc_b_id": "chen_zhiming",
+    "type": "就医",
+    "description": "白大褂",
+    "strength": 0.4
+  },
+  {
+    "npc_a_id": "xiao_bai",
+    "npc_b_id": "liu_yang",
+    "type": "邻居",
+    "description": "电三轮很吵",
+    "strength": 0.2
+  }
+]

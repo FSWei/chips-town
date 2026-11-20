@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Tile 标注工具 — Chips Town</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Noto Sans SC', system-ui, sans-serif; background: #1a1a2e; color: #e0e0e0; display: flex; height: 100vh; overflow: hidden; }
+
+/* 左侧面板 */
+.panel { width: 220px; background: #16213e; padding: 16px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; border-right: 2px solid #0f3460; }
+.panel h2 { font-size: 14px; color: #e94560; margin-bottom: 4px; }
+
+.cat-btn { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border: 2px solid transparent; border-radius: 6px; background: #1a1a2e; cursor: pointer; font-size: 13px; transition: all 0.15s; }
+.cat-btn:hover { background: #0f3460; }
+.cat-btn.active { border-color: #e94560; background: #0f3460; }
+.cat-color { width: 16px; height: 16px; border-radius: 3px; flex-shrink: 0; }
+.cat-count { margin-left: auto; font-size: 11px; color: #888; }
+
+.walkable-btn { padding: 8px 12px; border: 2px solid transparent; border-radius: 6px; background: #1a1a2e; cursor: pointer; font-size: 13px; text-align: center; }
+.walkable-btn.active { border-color: #e94560; }
+.walk-yes { color: #4ecca3; }
+.walk-no { color: #e94560; }
+
+.tools { display: flex; gap: 6px; flex-wrap: wrap; }
+.tool-btn { padding: 6px 10px; border: 1px solid #333; border-radius: 4px; background: #1a1a2e; color: #e0e0e0; cursor: pointer; font-size: 11px; }
+.tool-btn:hover { background: #0f3460; }
+.tool-btn.danger { color: #e94560; }
+
+.stats { font-size: 11px; color: #888; line-height: 1.6; }
+.stats b { color: #e0e0e0; }
+
+/* 中间画布区 */
+.canvas-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.toolbar { padding: 8px 16px; background: #16213e; border-bottom: 1px solid #0f3460; display: flex; align-items: center; gap: 12px; font-size: 12px; }
+.toolbar .info { color: #888; }
+.toolbar .zoom-controls { display: flex; gap: 4px; }
+.toolbar .zoom-controls button { width: 28px; height: 28px; border: 1px solid #333; border-radius: 4px; background: #1a1a2e; color: #e0e0e0; cursor: pointer; font-size: 14px; }
+.toolbar .zoom-controls button:hover { background: #0f3460; }
+
+.scroll-area { flex: 1; overflow: auto; padding: 16px; }
+.grid-container { position: relative; display: inline-block; }
+canvas { display: block; image-rendering: pixelated; cursor: crosshair; }
+
+/* 右侧详情 */
+.detail { width: 200px; background: #16213e; padding: 16px; border-left: 2px solid #0f3460; overflow-y: auto; }
+.detail h2 { font-size: 14px; color: #e94560; margin-bottom: 8px; }
+.detail-item { font-size: 12px; margin-bottom: 6px; }
+.detail-item label { color: #888; }
+.preview-tile { width: 96px; height: 96px; border: 2px solid #333; border-radius: 4px; image-rendering: pixelated; margin: 8px 0; background: #000; }
+</style>
+</head>
+<body>
+
+<!-- 左侧分类面板 -->
+<div class="panel">
+  <h2>🎨 Tile 类型</h2>
+  <div id="catButtons"></div>
+
+  <h2>🚶 可行走性</h2>
+  <div class="tools">
+    <div class="walkable-btn walk-yes" onclick="setWalkable(1)" id="walkYes">✅ 可走</div>
+    <div class="walkable-btn walk-no" onclick="setWalkable(0)" id="walkNo">❌ 不可走</div>
+  </div>
+
+  <h2>🔧 工具</h2>
+  <div class="tools">
+    <button class="tool-btn" onclick="clearAll()">清除全部标注</button>
+    <button class="tool-btn" onclick="clearCurrent()">清除当前格</button>
+    <button class="tool-btn" onclick="fillUnlabeled()">未标注→默认</button>
+    <button class="tool-btn" onclick="exportJSON()">📦 导出 JSON</button>
+    <button class="tool-btn" onclick="importJSON()">📂 导入 JSON</button>
+    <button class="tool-btn" onclick="exportCSV()">📄 导出 CSV</button>
+  </div>
+
+  <h2>📊 统计</h2>
+  <div class="stats" id="stats">加载中...</div>
+</div>
+
+<!-- 中间画布 -->
+<div class="canvas-area">
+  <div class="toolbar">
+    <span class="info" id="hoverInfo">鼠标悬停查看信息</span>
+    <span class="info">|</span>
+    <span class="info" id="tileCoords">-</span>
+    <span style="flex:1"></span>
+    <div class="zoom-controls">
+      <button onclick="zoomOut()">−</button>
+      <span class="info" id="zoomLevel">3x</span>
+      <button onclick="zoomIn()">+</button>
+    </div>
+  </div>
+  <div class="scroll-area">
+    <div class="grid-container">
+      <canvas id="grid"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- 右侧详情 -->
+<div class="detail">
+  <h2>📋 选中 Tile</h2>
+  <div class="preview-tile"><canvas id="preview" width="96" height="96" style="image-rendering:pixelated"></canvas></div>
+  <div class="detail-item"><label>坐标：</label><span id="detCoord">-</span></div>
+  <div class="detail-item"><label>索引：</label><span id="detIndex">-</span></div>
+  <div class="detail-item"><label>类型：</label><span id="detCat">-</span></div>
+  <div class="detail-item"><label>可走：</label><span id="detWalk">-</span></div>
+</div>
+
+<input type="file" id="fileInput" accept=".json" style="display:none" onchange="handleImport(event)">
+
+<script>
+const TILE = 16;
+const CATEGORIES = [
+  { id: 'grass',      name: '草地',      color: '#4ecca3' },
+  { id: 'road',       name: '马路',      color: '#666666' },
+  { id: 'sidewalk',   name: '人行道',    color: '#999999' },
+  { id: 'water',      name: '水面',      color: '#3498db' },
+  { id: 'building',   name: '建筑墙体',  color: '#e74c3c' },
+  { id: 'roof',       name: '屋顶',      color: '#e67e22' },
+  { id: 'door',       name: '门/入口',   color: '#8b4513' },
+  { id: 'window',     name: '窗户',      color: '#5dade2' },
+  { id: 'tree',       name: '树/灌木',   color: '#27ae60' },
+  { id: 'fence',      name: '围栏',      color: '#f39c12' },
+  { id: 'decoration', name: '装饰物',    color: '#9b59b6' },
+  { id: 'floor',      name: '室内地板',  color: '#d4a574' },
+  { id: 'furniture',  name: '家具',      color: '#795548' },
+  { id: 'vehicle',    name: '车辆',      color: '#1abc9c' },
+  { id: 'wall_edge',  name: '石墙/悬崖', color: '#7f8c8d' },
+  { id: 'ui',         name: 'UI元素',    color: '#34495e' },
+  { id: 'animation',  name: '动画帧',    color: '#2c3e50' },
+  { id: 'other',      name: '其他',      color: '#555555' },
+];
+
+let img = null;
+let cols = 0, rows = 0;
+let zoom = 3;
+let selectedCat = 'grass';
+let selectedWalk = 1;
+let labels = {}; // key: "col,row" → { cat, walkable }
+let isDragging = false;
+
+// 加载图片
+const imgEl = new Image();
+imgEl.onload = () => {
+  img = imgEl;
+  cols = Math.floor(img.width / TILE);
+  rows = Math.floor(img.height / TILE);
+  // 初始化 labels
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const key = `${c},${r}`;
+      if (!labels[key]) labels[key] = { cat: 'other', walkable: 0 };
+    }
+  }
+  initUI();
+  render();
+};
+imgEl.src = '/assets/Tilemap.png';
+
+function initUI() {
+  // 分类按钮
+  const container = document.getElementById('catButtons');
+  container.innerHTML = '';
+  CATEGORIES.forEach(cat => {
+    const btn = document.createElement('div');
+    btn.className = 'cat-btn' + (cat.id === selectedCat ? ' active' : '');
+    btn.dataset.cat = cat.id;
+    btn.innerHTML = `<div class="cat-color" style="background:${cat.color}"></div><span>${cat.name}</span><span class="cat-count" id="count_${cat.id}">0</span>`;
+    btn.onclick = () => selectCat(cat.id);
+    container.appendChild(btn);
+  });
+  updateStats();
+}
+
+function selectCat(catId) {
+  selectedCat = catId;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.toggle('active', b.dataset.cat === catId));
+}
+
+function setWalkable(v) {
+  selectedWalk = v;
+  document.getElementById('walkYes').classList.toggle('active', v === 1);
+  document.getElementById('walkNo').classList.toggle('active', v === 0);
+}
+setWalkable(1);
+
+function render() {
+  if (!img) return;
+  const canvas = document.getElementById('grid');
+  const ctx = canvas.getContext('2d');
+  const pw = cols * TILE * zoom;
+  const ph = rows * TILE * zoom;
+  canvas.width = pw;
+  canvas.height = ph;
+  ctx.imageSmoothingEnabled = false;
+
+  // 画原图
+  ctx.drawImage(img, 0, 0, pw, ph);
+
+  // 画标注半透明层
+  for (const [key, label] of Object.entries(labels)) {
+    const [c, r] = key.split(',').map(Number);
+    const cat = CATEGORIES.find(x => x.id === label.cat);
+    if (!cat || label.cat === 'other') continue;
+    ctx.fillStyle = cat.color + '55'; // 半透明
+    ctx.fillRect(c * TILE * zoom, r * TILE * zoom, TILE * zoom, TILE * zoom);
+
+    // 不可走的画 X
+    if (label.walkable === 0) {
+      ctx.strokeStyle = '#e94560';
+      ctx.lineWidth = 2;
+      const x1 = c * TILE * zoom + 2;
+      const y1 = r * TILE * zoom + 2;
+      const x2 = (c + 1) * TILE * zoom - 2;
+      const y2 = (r + 1) * TILE * zoom - 2;
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x2, y1); ctx.lineTo(x1, y2); ctx.stroke();
+    }
+  }
+
+  // 网格线
+  ctx.strokeStyle = '#ffffff15';
+  ctx.lineWidth = 1;
+  for (let c = 0; c <= cols; c++) {
+    ctx.beginPath(); ctx.moveTo(c * TILE * zoom, 0); ctx.lineTo(c * TILE * zoom, ph); ctx.stroke();
+  }
+  for (let r = 0; r <= rows; r++) {
+    ctx.beginPath(); ctx.moveTo(0, r * TILE * zoom); ctx.lineTo(pw, r * TILE * zoom); ctx.stroke();
+  }
+
+  updateStats();
+}
+
+function getTileFromEvent(e) {
+  const canvas = document.getElementById('grid');
+  const rect = canvas.getBoundingClientRect();
+  const c = Math.floor((e.clientX - rect.left) / (TILE * zoom));
+  const r = Math.floor((e.clientY - rect.top) / (TILE * zoom));
+  if (c >= 0 && c < cols && r >= 0 && r < rows) return { c, r };
+  return null;
+}
+
+function labelTile(c, r) {
+  const key = `${c},${r}`;
+  labels[key] = { cat: selectedCat, walkable: selectedWalk };
+  render();
+}
+
+function updateDetail(c, r) {
+  const key = `${c},${r}`;
+  const label = labels[key] || { cat: 'other', walkable: 0 };
+  const cat = CATEGORIES.find(x => x.id === label.cat);
+
+  document.getElementById('detCoord').textContent = `(${c}, ${r})`;
+  document.getElementById('detIndex').textContent = r * cols + c;
+  document.getElementById('detCat').textContent = cat ? cat.name : label.cat;
+  document.getElementById('detWalk').textContent = label.walkable ? '✅ 可走' : '❌ 不可走';
+
+  // 预览
+  const prev = document.getElementById('preview');
+  const pctx = prev.getContext('2d');
+  pctx.imageSmoothingEnabled = false;
+  pctx.clearRect(0, 0, 96, 96);
+  if (img) {
+    pctx.drawImage(img, c * TILE, r * TILE, TILE, TILE, 0, 0, 96, 96);
+  }
+  // 标注色边框
+  if (cat) {
+    pctx.strokeStyle = cat.color;
+    pctx.lineWidth = 3;
+    pctx.strokeRect(1, 1, 93, 93);
+  }
+}
+
+function updateStats() {
+  const counts = {};
+  let walkable = 0, total = cols * rows;
+  for (const [key, label] of Object.entries(labels)) {
+    counts[label.cat] = (counts[label.cat] || 0) + 1;
+    if (label.walkable) walkable++;
+  }
+  CATEGORIES.forEach(cat => {
+    const el = document.getElementById(`count_${cat.id}`);
+    if (el) el.textContent = counts[cat.id] || 0;
+  });
+  const labeled = Object.keys(labels).filter(k => labels[k].cat !== 'other').length;
+  document.getElementById('stats').innerHTML =
+    `网格: <b>${cols}×${rows}</b> (${total}格)<br>` +
+    `已标注: <b>${labeled}</b> / ${total}<br>` +
+    `可走: <b>${walkable}</b> 格<br>` +
+    `不可走: <b>${total - walkable}</b> 格`;
+}
+
+// 事件
+document.getElementById('grid').addEventListener('mousedown', (e) => {
+  isDragging = true;
+  const t = getTileFromEvent(e);
+  if (t) { labelTile(t.c, t.r); updateDetail(t.c, t.r); }
+});
+document.getElementById('grid').addEventListener('mousemove', (e) => {
+  const t = getTileFromEvent(e);
+  if (t) {
+    const key = `${t.c},${t.r}`;
+    const label = labels[key];
+    const cat = CATEGORIES.find(x => x.id === (label?.cat || 'other'));
+    document.getElementById('hoverInfo').textContent = `(${t.c},${t.r}) ${cat?.name || '-'} ${label?.walkable ? '🚶' : '🚫'}`;
+    document.getElementById('tileCoords').textContent = `索引 ${t.r * cols + t.c}`;
+    if (isDragging) { labelTile(t.c, t.r); updateDetail(t.c, t.r); }
+  }
+});
+document.getElementById('grid').addEventListener('mouseup', () => isDragging = false);
+document.getElementById('grid').addEventListener('mouseleave', () => isDragging = false);
+
+// 缩放
+function zoomIn() { zoom = Math.min(zoom + 1, 8); document.getElementById('zoomLevel').textContent = zoom + 'x'; render(); }
+function zoomOut() { zoom = Math.max(zoom - 1, 1); document.getElementById('zoomLevel').textContent = zoom + 'x'; render(); }
+
+// 工具函数
+function clearAll() { if (!confirm('清除全部标注？')) return; for (const key in labels) labels[key] = { cat: 'other', walkable: 0 }; render(); }
+function clearCurrent() { /* noop, just click to overwrite */ }
+function fillUnlabeled() {
+  for (const key in labels) {
+    if (labels[key].cat === 'other') labels[key] = { cat: selectedCat, walkable: selectedWalk };
+  }
+  render();
+}
+
+function exportJSON() {
+  const data = { cols, rows, tileSize: TILE, categories: CATEGORIES, labels };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'tile-labels.json';
+  a.click();
+}
+
+function exportCSV() {
+  let csv = 'col,row,index,category,walkable\n';
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const key = `${c},${r}`;
+      const label = labels[key] || { cat: 'other', walkable: 0 };
+      csv += `${c},${r},${r * cols + c},${label.cat},${label.walkable}\n`;
+    }
+  }
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'tile-labels.csv';
+  a.click();
+}
+
+function importJSON() { document.getElementById('fileInput').click(); }
+function handleImport(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (data.labels) { labels = data.labels; render(); alert('导入成功！'); }
+    } catch (err) { alert('JSON 格式错误'); }
+  };
+  reader.readAsText(file);
+}
+</script>
+</body>
+</html>

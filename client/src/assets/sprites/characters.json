@@ -1,0 +1,13 @@
+{
+  "tileWidth": 16,
+  "tileHeight": 16,
+  "characters": 6,
+  "directions": 4,
+  "frames": 3,
+  "directionMap": {
+    "down": 0,
+    "left": 1,
+    "right": 2,
+    "up": 3
+  }
+}
